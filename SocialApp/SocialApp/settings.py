@@ -9,13 +9,23 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dxiawzgnz',  # Cloud name của bạn
+    'API_KEY': '916324835836949',  # API key của bạn
+    'API_SECRET': 'it9HP_2TUJjIHLSshkbm0BYA5qE',  # API secret của bạn
+    'UPLOAD_PRESET': 'socialapp',  # Đảm bảo bạn sử dụng đúng tên preset
+}
 
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+HF_API_TOKEN = "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"
+OPENAI_API_KEY = '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'
 
 import cloudinary
 import cloudinary.uploader
@@ -25,7 +35,9 @@ cloudinary.config(
     cloud_name="dxiawzgnz",
     api_key="916324835836949",
     api_secret="it9HP_2TUJjIHLSshkbm0BYA5qE",
+
     secure=True,
+
 )
 DEFAULT_FILE_STORAGE = 'cloudinary.storage.MediaCloudinaryStorage'
 
@@ -38,7 +50,9 @@ SECRET_KEY = 'django-insecure-q+iorsbp#(ic55v1!*76i*sk7-esi3%#i&)dtiwn!ozuj08d@-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+#Xem lại
+ALLOWED_HOSTS = ['socialapp130124.pythonanywhere.com']
+
 
 #Debug file
 LOGGING = {
@@ -74,6 +88,8 @@ CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # Application definition
 
+
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -83,6 +99,8 @@ EMAIL_USE_TLS = True  # or False if not using TLS/SSL
 DEFAULT_FROM_EMAIL = 'theanhtran13012004@gmail.com'
 
 
+
+# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -107,7 +125,6 @@ INSTALLED_APPS = [
 #Côi còn COR nữa
 ]
 
-#Channels
 
 CHANNEL_LAYERS = {
     "default": {
@@ -117,7 +134,6 @@ CHANNEL_LAYERS = {
         },
     },
 }
-
 import pymysql
 pymysql.install_as_MySQLdb()
 AUTH_USER_MODEL = 'Sociales.User'
@@ -129,7 +145,7 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
 
     ),
-    'DEFAULT_PARSER_CLASSES': [
+        'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
@@ -138,7 +154,7 @@ REST_FRAMEWORK = {
 
 #Thêm vào để setup lại hiệu lực token
 OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 864000,  #Một ngày  -> đã chuyển thành 10 ngày nữa nhớ fix lại
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 86400000,  #Một ngày -> Đã fix thành 10 ngày
 
 }
 
@@ -158,6 +174,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
 ]
+
 
 ROOT_URLCONF = 'SocialApp.urls'
 
@@ -206,10 +223,10 @@ CACHES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'socialdb',
-        'USER': 'root',
-        'PASSWORD': '123456',
-        'HOST': ''
+        'NAME': 'socialapp130124$socialdb',
+        'USER': 'socialapp130124',
+        'PASSWORD': 'tta130124',
+        'HOST': 'socialapp130124.mysql.pythonanywhere-services.com'
     }
 }
 
@@ -249,6 +266,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

@@ -1,0 +1,92 @@
+{% extends 'admin/base_site.html' %}
+
+{% block content %}
+<h2>Thống kê hệ thống Mạng xã hội cựu Sinh Viên</h2>
+
+<!-- Form chọn thời gian -->
+<form method="post">
+    {% csrf_token %}
+    <label for="time_unit">Thống kê theo:</label>
+    <select name="time_unit" id="time_unit">
+        <option value="year" {% if time_unit == "year" %}selected{% endif %}>Năm</option>
+        <option value="quarter" {% if time_unit == "quarter" %}selected{% endif %}>Quý</option>
+        <option value="month" {% if time_unit == "month" %}selected{% endif %}>Tháng</option>
+    </select>
+    <button type="submit">Xem thống kê</button>
+</form>
+<form method="get" action="{% url 'export_excel' %}">
+    <input type="hidden" name="time_unit" value="{{time_unit}}">
+    <button type="submit">Xuất Excel</button>
+</form>
+<!-- Biểu đồ số lượng người dùng -->
+<div>
+    <canvas id="user_chart"></canvas>
+</div>
+
+<!-- Biểu đồ số lượng bài viết -->
+<div>
+    <canvas id="post_chart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let labels_users = [];
+    let values_users = [];
+    let labels_posts = [];
+    let values_posts = [];
+
+    {% for s in users_stats %}
+        labels_users.push('{{ s.time_unit }}');
+        values_users.push({{ s.count }});
+    {% endfor %}
+
+    {% for p in posts_stats %}
+        labels_posts.push('{{ p.time_unit }}');
+        values_posts.push({{ p.count }});
+    {% endfor %}
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Biểu đồ số lượng người dùng (chuyển sang dạng bar)
+        const user_ctx = document.getElementById('user_chart').getContext('2d');
+        new Chart(user_ctx, {
+            type: 'bar',
+            data: {
+                labels: labels_users,
+                datasets: [{
+                    label: 'Số lượng người dùng đăng ký',
+                    data: values_users,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Biểu đồ số lượng bài viết (vẫn giữ dạng bar)
+        const post_ctx = document.getElementById('post_chart').getContext('2d');
+        new Chart(post_ctx, {
+            type: 'bar',
+            data: {
+                labels: labels_posts,
+                datasets: [{
+                    label: 'Số lượng bài viết được đăng',
+                    data: values_posts,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

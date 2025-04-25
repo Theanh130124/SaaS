@@ -2,6 +2,17 @@
 import json
 from asyncio import Future
 
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status, permissions
+# Sử dụng permission mới
+from .permissions import CanUseAIFeature
+# Import hàm AI mới
+from .ai_services import generate_single_post_content_ai #, generate_survey_content_ai
+from .models import Post, Account # Import Account
+from .serializers import PostSerializer
+from django.db import transaction # Import transaction
+
 from oauthlib.uri_validate import query
 from rest_framework.parsers import JSONParser , MultiPartParser
 from .security.security_mes import *
@@ -99,8 +110,10 @@ class UserViewSet(viewsets.ViewSet , generics.RetrieveAPIView, generics.ListAPIV
     def get_permissions(self):
         if self.action.__eq__('create_lecturer'):#do admin tạo lecturer
             return [IsAdminUserRole()]
-        if self.action in ['list' , 'retrieve' ,'update','partial_update','current_user','account' ,'search_account','recent_search']:
+        if self.action in ['list' , 'retrieve' ,'current_user','account' ,'search_account','recent_search']:
             return [permissions.IsAuthenticated()]
+        if self.action in ['update', 'partial_update']:
+            return [permissions.IsAuthenticated(), OwnerCurrent()]
         return  [permissions.AllowAny()] #'create_alumni' .... ngta đk đc
 
     #Gọi acction bên serializers  -> của thằng khác mới không viết ở đây vd như create_alumni
@@ -159,7 +172,7 @@ class UserViewSet(viewsets.ViewSet , generics.RetrieveAPIView, generics.ListAPIV
                 user.save()
                 account = Account.objects.create(user=user,gender=gender , role=UserRole.ALUMNI.name,  phone_number=phone_number , date_of_birth=date_of_birth  )
                 alumni = AlumniAccount.objects.create(account=account,alumni_account_code=alumni_account_code )
-                return  Response(AlumniAccountSerializer(alumni).data,status=status.HTTP_200_OK)
+                return  Response(AlumniAccountSerializer(alumni).data,status=status.HTTP_201_CREATED)
         except Exception as e:
             error_message = str(e)
             return Response({'Phát hiện lỗi: ': error_message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -338,6 +351,10 @@ class PostViewSet(viewsets.ViewSet,generics.ListAPIView, generics.CreateAPIView 
     def get_permissions(self):
         if self.action in ['destroy','update','partial_update']:
             return [PostOwner()]
+         # Sử dụng permission mới cho action generate_ai_content
+        if self.action == 'generate_ai_content':
+            # Yêu cầu đăng nhập VÀ (có gói active HOẶC còn lượt dùng thử)
+            return [permissions.IsAuthenticated(), CanUseAIFeature()]
         if  self.action in ['list','retrieve','create','get_comments_in_post','get_image_in_post','get_reaction_detail_in_post',
                             ]:
             return [permissions.IsAuthenticated()]
@@ -381,6 +398,45 @@ class PostViewSet(viewsets.ViewSet,generics.ListAPIView, generics.CreateAPIView 
         except Exception as ex:
             return Response({'Phát hiện lỗi', str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # Tạo bài viết AI
+    @action(methods=['post'], detail=False, url_path='generate-ai-content')
+    def generate_ai_content(self, request):
+        """
+        API Endpoint để người dùng tạo 1 bài viết bằng AI dựa trên chủ đề.
+        """
+        topic = request.data.get('topic')
+        if not topic:
+            return Response({'detail': 'Vui lòng cung cấp chủ đề (topic).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            account = request.user.account
+            is_trial_user = not account.has_active_subscription
+
+            # Gọi AI để tạo nội dung 1 bài viết
+            post_content = generate_single_post_content_ai(topic)
+
+            new_post = Post.objects.create(
+                account=account,
+                post_content=post_content,
+            )
+
+            if is_trial_user:
+                Account.objects.filter(pk=account.pk).update(ai_trial_uses=models.F('ai_trial_uses') + 1)
+
+            return Response(
+                {
+                    'detail': f'Đã tạo thành công 1 bài viết về chủ đề "{topic}".',
+                    'post_content': post_content,
+                    'trial_uses_remaining': (Account._meta.get_field("ai_trial_uses").default + 2 - (account.ai_trial_uses + (1 if is_trial_user else 0))) if is_trial_user else None
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Account.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy tài khoản người dùng.'}, status=status.HTTP_404_NOT_FOUND)
+
+        except (ConnectionError, ValueError) as e:
+            return Response({'detail': f'Lỗi: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # #Dem tat ca reaction tren 1 post
@@ -878,42 +934,42 @@ class SurveyQuestionViewSet(viewsets.ViewSet,generics.ListAPIView ,generics.Upda
 
 
 #Từng câu trả lời cho các câu hỏi  -> 4 câu trả lời cho câu hỏi - Chưa test 21.01.2025
-# class SurveyQuestionOptionViewSet(viewsets.ViewSet,generics.CreateAPIView,):
-#     queryset = SurveyQuestionOption.objects.all()
-#     serializer_class = SurveyQuestionOptionSerializer
-#     pagination_class = MyPageSize
-#     permissions_class = [permissions.IsAuthenticated]
-#     parser_classes = [JSONParser, MultiPartParser]
-#
-#     def get_serializer_class(self):
-#         if self.action == 'create':
-#             return CreateSurveyQuestionOptionSerializer
-#         if self.action in ['update', 'partial_update']:
-#             return UpdateSurveyQuestionOptionSerializer
-#         return self.serializer_class
-#     #Lấy câu trả lời của câu hỏi đó
-#     @action(methods=['get'],detail=True,url_path='survey_answer')
-#     def get_survey_answer(self,request,pk):
-#         survey_answer = self.get_object().survey_answers.select_related('survey_question','survey_response').all()
-#         return Response(
-#             SurveyAnswerSerializerForRelated(survey_answer,many=True,context={'request': request}).data,
-#             status=status.HTTP_200_OK)
-#     @action(methods=['post'],detail=True,url_path='add_update_survey_answer')
-#     def add_or_update_survey_answer(self,request,pk):
-#         try:
-#             survey_question_option = self.get_object()
-#             list_survey_answer_id = request.data.get('list_survey_answer_id',[])
-#             survey_answers = SurveyAnswer.objects.filter(id__in=list_survey_answer_id)
-#             if survey_answers.count() != list_survey_answer_id.count():
-#                 missing_ids = set(list_survey_answer_id)-set(survey_answers.values_list('id', flat=True))
-#                 raise NotFound(f"Survey Answer with IDs {missing_ids} do not exist.")
-#             survey_question_option.survey_answers.add(*survey_answers)
-#             survey_question_option.save()
-#
-#             return Response(SurveyQuestionOptionSerializer(survey_question_option).data, status=status.HTTP_201_CREATED)
-#
-#         except Exception as ex:
-#             return Response({'Phát hiện lỗi', str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+class SurveyQuestionOptionViewSet(viewsets.ViewSet,generics.CreateAPIView,):
+    queryset = SurveyQuestionOption.objects.all()
+    serializer_class = SurveyQuestionOptionSerializer
+    pagination_class = MyPageSize
+    permissions_class = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CreateSurveyQuestionOptionSerializer
+        if self.action in ['update', 'partial_update']:
+            return UpdateSurveyQuestionOptionSerializer
+        return self.serializer_class
+    #Lấy câu trả lời của câu hỏi đó
+    @action(methods=['get'],detail=True,url_path='survey_answer')
+    def get_survey_answer(self,request,pk):
+        survey_answer = self.get_object().survey_answers.select_related('survey_question','survey_response').all()
+        return Response(
+            SurveyAnswerSerializerForRelated(survey_answer,many=True,context={'request': request}).data,
+            status=status.HTTP_200_OK)
+    @action(methods=['post'],detail=True,url_path='add_update_survey_answer')
+    def add_or_update_survey_answer(self,request,pk):
+        try:
+            survey_question_option = self.get_object()
+            list_survey_answer_id = request.data.get('list_survey_answer_id',[])
+            survey_answers = SurveyAnswer.objects.filter(id__in=list_survey_answer_id)
+            if survey_answers.count() != list_survey_answer_id.count():
+                missing_ids = set(list_survey_answer_id)-set(survey_answers.values_list('id', flat=True))
+                raise NotFound(f"Survey Answer with IDs {missing_ids} do not exist.")
+            survey_question_option.survey_answers.add(*survey_answers)
+            survey_question_option.save()
+
+            return Response(SurveyQuestionOptionSerializer(survey_question_option).data, status=status.HTTP_201_CREATED)
+
+        except Exception as ex:
+            return Response({'Phát hiện lỗi', str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SurveyResponseViewSet(viewsets.ViewSet,generics.ListAPIView,generics.RetrieveAPIView, generics.CreateAPIView):
     queryset = SurveyResponse.objects.all()

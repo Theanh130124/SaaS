@@ -32,6 +32,11 @@ class ConfirmStatus(TextChoices):
     REJECTED = "Rejected", "Đã từ chối"
 
 
+class SubscriptionStatus(TextChoices):
+    ACTIVE = "Active", "Đang hoạt động"
+    INACTIVE = "Inactive", "Không hoạt động"
+
+
 class Reaction(TextChoices):
     LIKE = "Like", "Like"
     HAHA = "Haha", "Haha"
@@ -43,7 +48,6 @@ class SurveyQuestionType(TextChoices):
     ALUMNI_INCOME = "Alumni Income", "Thu nhập cựu sinh viên"
     EMPLOYMENT_STATUS = "Employment Status", "Tình hình việc làm"
 
-#Tài khoản
 class User(AbstractUser):
     password_changed_at = models.DateTimeField(null=True, blank=True)
     def __str__(self):
@@ -73,6 +77,24 @@ class Account(BaseModel):
         choices=Gender.choices,
         default=Gender.Nam
     )
+
+    # Đã bổ sung này
+    subscription_status = models.CharField(
+        max_length=20,
+        choices=SubscriptionStatus.choices,
+        default=SubscriptionStatus.INACTIVE
+    )
+
+    subscription_expiry_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Ngày giờ hết hạn gói đăng ký."
+    )
+
+    ai_trial_uses = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Số lần đã sử dụng tính năng AI trong giai đoạn dùng thử."
+    )
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     def __str__(self):
         return self.user.username
@@ -84,6 +106,22 @@ class Account(BaseModel):
             self.account_status = False
             self.save()
 
+
+
+    @property
+    def has_active_subscription(self):
+        # Kiểm tra cả trạng thái và ngày hết hạn
+        return (self.subscription_status == SubscriptionStatus.ACTIVE.value and
+                self.subscription_expiry_date is not None and
+                self.subscription_expiry_date > timezone.now())
+
+    @property
+    def can_use_ai_trial(self):
+        """Kiểm tra xem còn lượt dùng thử AI hay không."""
+        MAX_AI_TRIALS = 2 # Định nghĩa số lần dùng thử tối đa
+        return self.ai_trial_uses < MAX_AI_TRIALS
+
+#Tài khoản
 #Fe fetch Api nhớ để ý cái này
     # def get_avatar_url(self):
     #     return self.avatar.url.replace('image/upload/', '')
@@ -181,7 +219,14 @@ class SurveyQuestion(BaseModel):
     def __str__(self):
         return self.question_content
 #Trả lời cho các câu hỏi trắc nghiệm
+class SurveyQuestionOption(models.Model):
+    question_option_value = models.TextField() #A.Open objects p  B...  C... D
+    question_option_order = models.IntegerField()#1 , 2 ,3 ,4
+    survey_question = models.ForeignKey(SurveyQuestion, on_delete=models.CASCADE) #->thuoc cau hỏi
+    survey_answers = models.ManyToManyField('SurveyAnswer', blank=True)
 
+    def __str__(self):
+        return self.question_option_value
 #Trả về để xem người đó đã làm khảo sát chưa -> tính tỉ lệ người hoàn thành
 class SurveyResponse(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True)
@@ -209,8 +254,13 @@ class PostInvitation(BaseModel):
     end_time = models.DateTimeField()
     post = models.OneToOneField(Post , on_delete=models.CASCADE) ##Chổ này có post_id nhá
     accounts_alumni = models.ManyToManyField(AlumniAccount,blank=True) #-> Xem ở đâu có nên đổi AlumniAccount không
+# #Lời mời vào nhóm
+class InvitationGroup(BaseModel):
+    invitation_group_name = models.CharField(max_length=255)
+    accounts = models.ManyToManyField(Account, blank=True)
 
-
+    def __str__(self):
+        return self.invitation_group_name
 # #Nhóm
 class Group(BaseModel):
     name = models.CharField(max_length=255, unique=True)
@@ -236,6 +286,7 @@ class Message(BaseModel):
     who_sent = models.ForeignKey('Account', on_delete=models.CASCADE, null=True)  # Người gửi
     content = models.CharField(max_length=10000)  # Nội dung tin nhắn
     room = models.ForeignKey('Room', on_delete=models.CASCADE, null=True)  # Phòng chat
+    seen = models.BooleanField(default=False)  # Trạng thái đã xem
     timestamp = models.DateTimeField(default=timezone.now)  # Thời gian gửi tin nhắn
 
     def __str__(self):

@@ -190,7 +190,7 @@ class SurveyResponseSerializer(serializers.ModelSerializer):
         model = SurveyResponse
         fields = '__all__'
 class SurveyResponseForListSerializer(serializers.ModelSerializer):
-    account = AccountSerializer
+    account = AccountSerializer()
     class Meta:
         model = SurveyResponse
         fields = '__all__'
@@ -219,9 +219,17 @@ class PostSurveyUpdateSerializer(serializers.ModelSerializer):
         model = PostSurvey
         fields = ['id', 'post_survey_title', 'start_time', 'end_time', 'is_closed']
 
+
+class PostInvitedForListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostInvitation
+        fields = '__all__'
+
 # Khảo sát
 class PostForListSerializer(serializers.ModelSerializer):
     post_survey = PostSurveyFoListSerializer(source='postsurvey', read_only=True)
+    post_invitation = PostInvitedForListSerializer(source='postinvitation' , read_only=True)
+
     account = AccountSerializer(read_only=True)
     class Meta:
         model = Post
@@ -252,20 +260,22 @@ class UpdateSurveyQuestionSerializer(serializers.ModelSerializer):
 
 
 ##---SurveyQuestionOption
-# class SurveyQuestionOptionSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = SurveyQuestionOption
-#         fields = '__all__'
-# class CreateSurveyQuestionOptionSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = SurveyQuestionOption
-#         fields = ['id','question_option_value','question_option_order','survey_question','survey_answers']
-# class UpdateSurveyQuestionOptionSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = SurveyQuestionOption
-#         fields = ['id','question_option_value','question_option_order']
+class SurveyQuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SurveyQuestionOption
+        fields = '__all__'
+class CreateSurveyQuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SurveyQuestionOption
+        fields = ['id','question_option_value','question_option_order','survey_question','survey_answers']
+class UpdateSurveyQuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SurveyQuestionOption
+        fields = ['id','question_option_value','question_option_order']
 
 class PostSurveyForListSerializer(serializers.ModelSerializer):
+    survey_questions = SurveyQuestionFoListSerializer(many=True, read_only=True)
+    survey_responses = SurveyResponseForListSerializer(many=True, read_only=True, source="surveyresponse_set")
     class Meta:
         model = PostSurvey
         fields = '__all__'

@@ -91,11 +91,11 @@ my_admin_site.register(PostImage, PostImageAdmin)
 my_admin_site.register(Comment, CommentAdmin)
 my_admin_site.register(PostSurvey, PostSurveyAdmin)
 my_admin_site.register(SurveyQuestion,SurveyQuestionAdmin)
-
+my_admin_site.register(SurveyQuestionOption,SurveyQuestionOptionAdmin)
 my_admin_site.register(SurveyResponse,SurveyResponseAdmin)
 my_admin_site.register(SurveyAnswer,SurveyAnswerAdmin)
 my_admin_site.register(PostInvitation,PostInvitationAdmin)
-
+my_admin_site.register(InvitationGroup,InvitationGroupAdmin)
 my_admin_site.register(Group,GroupAdmin)
 
 my_admin_site.register(Room,RoomAdmin)

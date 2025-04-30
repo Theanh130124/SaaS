@@ -1,1 +1,90 @@
-# Alumni-social-network_FE
+Tạo VPC  10.0.0.0/16  
+
+
+(Khác 2 zone để chết 1 zone vẫn còn zone khác
+2 subnet - public - chạy EC2 django 
+
+
+private - chạy RDS django 
+
+Tạo internetget wave rồi attch vào vpc
+
+
+Tạo routertable
+định tuyến mạng của subnet
+
+
+anywhere
+
+
+
+Tạo ec2 và add nó vào 
+
+
+
+
+
+Security group
+
+
+
+ssh: 771236651378781348914
+
+
+
+
+
+
+
+Type
+Protocol
+Port Range
+Source
+Giải thích
+SSH
+TCP
+22
+Your IP (vd: 113.23.x.x/32)
+Chỉ bạn mới SSH vào EC2 được
+HTTP
+TCP
+80
+0.0.0.0/0
+Mọi người đều có thể truy cập trang web
+HTTPS
+TCP
+443
+0.0.0.0/0
+Hỗ trợ SSL (nếu có), truy cập bảo mật
+
+
+
+
+cấu hình EC2
+
+
+
+
+Connect EC2 
+
+https://github.com/Theanh130124/SaaS.git
+
+
+git clone https://github.com/Theanh130124/SaaS.git
+
+ls -lrt
+
+
+Tạo RDS dùng EC2 để mở dùng private Ip (không mở public khi tạo EC2) -> vì sẽ  nằm trong cùng VPC để giao tiếp nội bộ
+
+
+
+đi cài database cho EC2 chứa rds  
+
+xong tạo database(tạo trên ec chứa rds -> rồi liên kết) 
+rồi python3 manage.py migrate 
+
+
+
+
+ping private trong database bằng con ec2 trong cùng 1 vpc

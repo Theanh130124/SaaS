@@ -2,29 +2,39 @@ Tạo VPC  10.0.0.0/16
 
 
 (Khác 2 zone để chết 1 zone vẫn còn zone khác
-2 subnet - public - chạy EC2 django 
+2 subnet - public - chạy EC2 django ,  private - chạy RDS django (ban đầu con này tạo public để không dùng SSH key - còn không thì dùng Putty)
 
 
-private - chạy RDS django 
 
-Tạo internetget wave rồi attch vào vpc
+Tạo internetgetwate rồi attch vào vpc trên
 
 
-Tạo routertable
+Tạo routertable(tạo 2 con 1 con intenetgetewate , 1 con local)
 định tuyến mạng của subnet
+![image](https://github.com/user-attachments/assets/30034157-f683-41cf-b2f1-e35b87c4454a)
 
+![image](https://github.com/user-attachments/assets/d27fd784-bdb9-4862-9a97-11eb699bb58d)
 
 anywhere
 
 
 
-Tạo ec2 và add nó vào 
+Tạo securitygr(Phải có ICMPV4 trong hình chưa có)
+
+![image](https://github.com/user-attachments/assets/2a350185-aa8e-4058-b408-a25504a7cd30)
+
+
+Tạo 2 ec2 và add nó vào 
+
+Tạo con RDS -> kết nối tới - 1 con EC2
+
+-> 
 
 
 
 
 
-Security group
+
 
 
 

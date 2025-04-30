@@ -1,3 +1,9 @@
+
+<h1>Xem hướng dẫn chi tiết tại</h1>
+
+
+https://www.youtube.com/watch?v=ft4A5dn2v5o
+
 Tạo VPC  10.0.0.0/16  
 
 

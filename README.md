@@ -158,3 +158,16 @@ rồi python3 manage.py migrate
 
 
 ping private trong database bằng con ec2 trong cùng 1 vpc
+
+
+
+
+pip install gunicorn
+
+
+sudo lsof -i :9000
+
+
+gunicorn --workers 3 --bind 0.0.0.0:9000 SocialApp.wsgi:application
+
+

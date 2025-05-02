@@ -159,7 +159,7 @@ rồi python3 manage.py migrate
 
 ping private trong database bằng con ec2 trong cùng 1 vpc
 
-
+--------------
 
 
 pip install gunicorn
@@ -167,7 +167,50 @@ pip install gunicorn
 
 sudo lsof -i :9000
 
+sudo lsof -i :8000
+
+
 
 gunicorn --workers 3 --bind 0.0.0.0:9000 SocialApp.wsgi:application
 
+
+
+Sử dụng screen:
+Cài đặt screen (nếu chưa có):
+
+bash
+Copy
+Edit
+sudo apt-get install screen
+Tạo một session mới với screen:
+
+bash
+Copy
+Edit
+screen -S gunicorn-session
+Chạy Gunicorn trong session screen:
+
+bash
+Copy
+Edit
+gunicorn --workers 3 --bind 0.0.0.0:8000 SocialApp.wsgi:application
+Thoát khỏi session screen nhưng giữ Gunicorn chạy:
+Nhấn Ctrl + A, sau đó nhấn D để thoát khỏi session screen.
+
+Để quay lại session screen:
+
+bash
+Copy
+Edit
+screen -r gunicorn-session
+
+
+
+------------
+sudo chown -R ubuntu:ubuntu /home/ubuntu/SaaS/SocialApp/static
+sudo chmod -R 755 /home/ubuntu/SaaS/SocialApp/static
+
+
+
+python manage.py collectstatic
 

@@ -204,7 +204,7 @@ Copy
 Edit
 screen -r gunicorn-session
 
-
+sudo kill 4080 4616
 
 ------------
 sudo chown -R ubuntu:ubuntu /home/ubuntu/SaaS/SocialApp/static

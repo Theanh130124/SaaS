@@ -144,6 +144,10 @@ git clone https://github.com/Theanh130124/SaaS.git
 
 ls -lrt
 
+sudo apt update
+
+sudo apt install python3-pip -y
+
 
 Tạo RDS dùng EC2 để mở dùng private Ip (không mở public khi tạo EC2) -> vì sẽ  nằm trong cùng VPC để giao tiếp nội bộ
 

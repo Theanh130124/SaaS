@@ -69,7 +69,11 @@ Rồi tạo ec2 để có thể kết nối với RDS
 
 
 
+Tăng khả năng chịu lỗi (fault tolerance): nếu một AZ bị sự cố (mất điện, sự cố phần cứng...), EC2 ở AZ còn lại vẫn hoạt động.
 
+Đảm bảo độ sẵn sàng cao (high availability): hệ thống vẫn phục vụ người dùng kể cả khi một máy chủ bị ngắt.
+
+Phân phối tải hợp lý (load distribution): chia đều lưu lượng truy cập giữa các server để tránh quá tải một máy.
 
 
 
